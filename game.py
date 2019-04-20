@@ -3,10 +3,10 @@ from pygame.locals import *
 
 # set up pygame
 pygame.init()
-# set up the window
 
-WINDOWWIDTH = 400
-WINDOWHEIGHT = 400
+# set up the window
+WINDOWWIDTH = 1000
+WINDOWHEIGHT = 600
 windowSurface = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT), 0, 32)
 pygame.display.set_caption('Animation')
 
@@ -15,19 +15,31 @@ DOWNLEFT = 1
 DOWNRIGHT = 3
 UPLEFT = 7
 UPRIGHT = 9
-MOVESPEED = 4
+MOVESPEED = 5
 
 # set up the colors
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
+YELLOW = (255, 255, 0)
 
 # set up the block data structure
-b1 = {'rect': pygame.Rect(300, 80, 50, 100), 'color': RED, 'dir': UPRIGHT}
-b2 = {'rect': pygame.Rect(200, 200, 20, 20), 'color': GREEN, 'dir': UPLEFT}
-b3 = {'rect': pygame.Rect(100, 150, 60, 60), 'color': BLUE, 'dir': DOWNLEFT}
-blocks = [b1, b2, b3]
+# b1 = {'rect': pygame.Rect(300, 80, 50, 100), 'color': RED, 'dir': UPRIGHT}
+b2 = {'rect': pygame.Rect(200, 200, 20, 20), 'color': GREEN, 'dir': UPRIGHT}
+# b3 = {'rect': pygame.Rect(100, 150, 60, 60), 'color': BLUE, 'dir': DOWNLEFT}
+balls = [b2]
+
+padddle1 = {'rect': pygame.Rect(50, 250, 20, 100), 'color': BLUE}
+padddle2 = {'rect': pygame.Rect(900, 250, 20, 100), 'color': RED}
+
+# initialize font; must be called after 'pygame.init()' to avoid 'Font not Initialized' error
+myfont = pygame.font.SysFont("monospace", 96)
+
+# render text
+
+p1_score = 0
+p2_score = 0
 
 # run the game loop
 while True:
@@ -35,7 +47,7 @@ while True:
     # check for the QUIT event
     for event in pygame.event.get():
 
-        if event.type == QUIT:
+        if event.type == pygame.locals.QUIT:
             pygame.quit()
             sys.exit()
 
@@ -43,64 +55,109 @@ while True:
     windowSurface.fill(BLACK)
 
     # loop the block
-    for b in blocks:
+    paddle1_rect = padddle1['rect']
+    paddle2_rect = padddle2['rect']
+    for ball in balls:
 
         # move the block data structure
-        if b['dir'] == DOWNLEFT:
-            b['rect'].left -= MOVESPEED
-            b['rect'].top += MOVESPEED
+        if ball['dir'] == DOWNLEFT:
+            ball['rect'].left -= MOVESPEED
+            ball['rect'].top += MOVESPEED
 
-        if b['dir'] == DOWNRIGHT:
-            b['rect'].left += MOVESPEED
-            b['rect'].top += MOVESPEED
+        if ball['dir'] == DOWNRIGHT:
+            ball['rect'].left += MOVESPEED
+            ball['rect'].top += MOVESPEED
 
-        if b['dir'] == UPLEFT:
-            b['rect'].left -= MOVESPEED
-            b['rect'].top -= MOVESPEED
+        if ball['dir'] == UPLEFT:
+            ball['rect'].left -= MOVESPEED
+            ball['rect'].top -= MOVESPEED
 
-        if b['dir'] == UPRIGHT:
-            b['rect'].left += MOVESPEED
-            b['rect'].top -= MOVESPEED
+        if ball['dir'] == UPRIGHT:
+            ball['rect'].left += MOVESPEED
+            ball['rect'].top -= MOVESPEED
 
         # check if the block has moved out of the window
-        if b['rect'].top < 0:
+        if ball['rect'].top < 0:
 
             # block has moved past the top
-            if b['dir'] == UPLEFT:
-                b['dir'] = DOWNLEFT
-            if b['dir'] == UPRIGHT:
-                b['dir'] = DOWNRIGHT
+            if ball['dir'] == UPLEFT:
+                ball['dir'] = DOWNLEFT
+            if ball['dir'] == UPRIGHT:
+                ball['dir'] = DOWNRIGHT
 
-        if b['rect'].bottom > WINDOWHEIGHT:
+        if ball['rect'].bottom > WINDOWHEIGHT:
 
             # block has moved past the bottom
-            if b['dir'] == DOWNLEFT:
-                b['dir'] = UPLEFT
-            if b['dir'] == DOWNRIGHT:
-                b['dir'] = UPRIGHT
+            if ball['dir'] == DOWNLEFT:
+                ball['dir'] = UPLEFT
+            if ball['dir'] == DOWNRIGHT:
+                ball['dir'] = UPRIGHT
 
-        if b['rect'].left < 0:
-
+        if ball['rect'].left < 0:
             # block has moved past the left side
-            if b['dir'] == DOWNLEFT:
-                b['dir'] = DOWNRIGHT
-            if b['dir'] == UPLEFT:
-                b['dir'] = UPRIGHT
 
-        if b['rect'].right > WINDOWWIDTH:
+            # increment score by 1
+            p2_score += 1
+
+            if ball['dir'] == DOWNLEFT:
+                ball['dir'] = DOWNRIGHT
+            if ball['dir'] == UPLEFT:
+                ball['dir'] = UPRIGHT
+
+        if ball['rect'].right > WINDOWWIDTH:
 
             # block has moved past the right side
-            if b['dir'] == DOWNRIGHT:
-                b['dir'] = DOWNLEFT
-            if b['dir'] == UPRIGHT:
-                b['dir'] = UPLEFT
+
+            # increment score by 1
+            p1_score += 1
+
+            if ball['dir'] == DOWNRIGHT:
+                ball['dir'] = DOWNLEFT
+            if ball['dir'] == UPRIGHT:
+                ball['dir'] = UPLEFT
+
+        # left paddle
+        if paddle1_rect.left >= ball['rect'].left:
+            if ball['rect'].top > paddle1_rect.top and ball['rect'].bottom < paddle1_rect.bottom:
+                # block has moved past the left side
+                if ball['dir'] == DOWNLEFT:
+                    ball['dir'] = DOWNRIGHT
+                if ball['dir'] == UPLEFT:
+                    ball['dir'] = UPRIGHT
+
+        # right paddle
+        if paddle2_rect.right <= ball['rect'].right:
+            if ball['rect'].bottom > paddle2_rect.top and ball['rect'].top < paddle2_rect.bottom:
+                # block has moved past the left side
+                if ball['dir'] == DOWNRIGHT:
+                    ball['dir'] = DOWNLEFT
+                if ball['dir'] == UPRIGHT:
+                    ball['dir'] = UPLEFT
 
         # draw the block onto the surface
 
-        pygame.draw.rect(windowSurface, b['color'], b['rect'])
+        pygame.draw.rect(windowSurface, ball['color'], ball['rect'])
+
+    # paddle1
+
+    keys_pressed = pygame.key.get_pressed()
+
+    if keys_pressed[pygame.K_q]:
+        paddle1_rect.top -= MOVESPEED
+    if keys_pressed[pygame.K_a]:
+        paddle1_rect.top += MOVESPEED
+
+    if keys_pressed[pygame.K_p]:
+        paddle2_rect.top -= MOVESPEED
+    if keys_pressed[pygame.K_l]:
+        paddle2_rect.top += MOVESPEED
+
+    pygame.draw.rect(windowSurface, padddle1['color'], paddle1_rect)
+    pygame.draw.rect(windowSurface, padddle2['color'], paddle2_rect)
+
+    windowSurface.blit(myfont.render(str(p1_score), 1, BLUE), (0, 0))
+    windowSurface.blit(myfont.render(str(p2_score), 1, RED), (940, 0))
 
     # draw the window onto the screen
-
     pygame.display.update()
-
     time.sleep(0.02)
