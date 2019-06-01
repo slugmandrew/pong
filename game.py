@@ -1,7 +1,11 @@
+from typing import Dict, Union, Tuple
+
 import pygame, sys, time
 from pygame.locals import *
 
 # set up pygame
+from pygame.rect import RectType
+
 pygame.init()
 
 # set up the window
@@ -24,11 +28,14 @@ GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
 YELLOW = (255, 255, 0)
 
+centreX = WINDOWWIDTH / 2
+centreY = WINDOWHEIGHT / 2
+
 # set up the block data structure
 # b1 = {'rect': pygame.Rect(300, 80, 50, 100), 'color': RED, 'dir': UPRIGHT}
-b2 = {'rect': pygame.Rect(200, 200, 20, 20), 'color': GREEN, 'dir': UPRIGHT}
+ball: Dict[str, Union[RectType, Tuple[int, int, int], int]] = {'rect': pygame.Rect(centreX, centreY, 20, 20), 'color': GREEN, 'dir': UPRIGHT}
 # b3 = {'rect': pygame.Rect(100, 150, 60, 60), 'color': BLUE, 'dir': DOWNLEFT}
-balls = [b2]
+# balls = [b2]
 
 padddle1 = {'rect': pygame.Rect(50, 250, 20, 100), 'color': BLUE}
 padddle2 = {'rect': pygame.Rect(900, 250, 20, 100), 'color': RED}
@@ -44,6 +51,10 @@ p2_score = 0
 # run the game loop
 while True:
 
+    def new_ball(direction):
+        return {'rect': pygame.Rect(centreX, centreY, 20, 20), 'color': GREEN, 'dir': direction}
+
+
     # check for the QUIT event
     for event in pygame.event.get():
 
@@ -57,86 +68,83 @@ while True:
     # loop the block
     paddle1_rect = padddle1['rect']
     paddle2_rect = padddle2['rect']
-    for ball in balls:
 
-        # move the block data structure
-        if ball['dir'] == DOWNLEFT:
-            ball['rect'].left -= MOVESPEED
-            ball['rect'].top += MOVESPEED
+    # move the block data structure
+    if ball['dir'] == DOWNLEFT:
+        ball['rect'].left -= MOVESPEED
+        ball['rect'].top += MOVESPEED
 
-        if ball['dir'] == DOWNRIGHT:
-            ball['rect'].left += MOVESPEED
-            ball['rect'].top += MOVESPEED
+    if ball['dir'] == DOWNRIGHT:
+        ball['rect'].left += MOVESPEED
+        ball['rect'].top += MOVESPEED
 
+    if ball['dir'] == UPLEFT:
+        ball['rect'].left -= MOVESPEED
+        ball['rect'].top -= MOVESPEED
+
+    if ball['dir'] == UPRIGHT:
+        ball['rect'].left += MOVESPEED
+        ball['rect'].top -= MOVESPEED
+
+    # check if the block has moved out of the window
+    if ball['rect'].top < 0:
+
+        # block has moved past the top
         if ball['dir'] == UPLEFT:
-            ball['rect'].left -= MOVESPEED
-            ball['rect'].top -= MOVESPEED
-
+            ball['dir'] = DOWNLEFT
         if ball['dir'] == UPRIGHT:
-            ball['rect'].left += MOVESPEED
-            ball['rect'].top -= MOVESPEED
+            ball['dir'] = DOWNRIGHT
 
-        # check if the block has moved out of the window
-        if ball['rect'].top < 0:
+    if ball['rect'].bottom > WINDOWHEIGHT:
 
-            # block has moved past the top
-            if ball['dir'] == UPLEFT:
-                ball['dir'] = DOWNLEFT
-            if ball['dir'] == UPRIGHT:
-                ball['dir'] = DOWNRIGHT
+        # block has moved past the bottom
+        if ball['dir'] == DOWNLEFT:
+            ball['dir'] = UPLEFT
+        if ball['dir'] == DOWNRIGHT:
+            ball['dir'] = UPRIGHT
 
-        if ball['rect'].bottom > WINDOWHEIGHT:
+    if ball['rect'].left < 0:
+        # block has moved past the left side
 
-            # block has moved past the bottom
-            if ball['dir'] == DOWNLEFT:
-                ball['dir'] = UPLEFT
-            if ball['dir'] == DOWNRIGHT:
-                ball['dir'] = UPRIGHT
+        # increment score by 1
+        p2_score += 1
 
-        if ball['rect'].left < 0:
+        ball = new_ball(UPRIGHT)
+
+    if ball['rect'].right > WINDOWWIDTH:
+        # block has moved past the right side
+
+        # increment score by 1
+        p1_score += 1
+
+        ball = new_ball(UPLEFT)
+
+        # if ball['dir'] == DOWNRIGHT:
+        #     ball['dir'] = DOWNLEFT
+        # if ball['dir'] == UPRIGHT:
+        #     ball['dir'] = UPLEFT
+
+    # left paddle
+    if paddle1_rect.left >= ball['rect'].left:
+        if ball['rect'].top > paddle1_rect.top and ball['rect'].bottom < paddle1_rect.bottom:
             # block has moved past the left side
-
-            # increment score by 1
-            p2_score += 1
-
             if ball['dir'] == DOWNLEFT:
                 ball['dir'] = DOWNRIGHT
             if ball['dir'] == UPLEFT:
                 ball['dir'] = UPRIGHT
 
-        if ball['rect'].right > WINDOWWIDTH:
-
-            # block has moved past the right side
-
-            # increment score by 1
-            p1_score += 1
-
+    # right paddle
+    if paddle2_rect.right <= ball['rect'].right:
+        if ball['rect'].bottom > paddle2_rect.top and ball['rect'].top < paddle2_rect.bottom:
+            # block has moved past the left side
             if ball['dir'] == DOWNRIGHT:
                 ball['dir'] = DOWNLEFT
             if ball['dir'] == UPRIGHT:
                 ball['dir'] = UPLEFT
 
-        # left paddle
-        if paddle1_rect.left >= ball['rect'].left:
-            if ball['rect'].top > paddle1_rect.top and ball['rect'].bottom < paddle1_rect.bottom:
-                # block has moved past the left side
-                if ball['dir'] == DOWNLEFT:
-                    ball['dir'] = DOWNRIGHT
-                if ball['dir'] == UPLEFT:
-                    ball['dir'] = UPRIGHT
+    # draw the block onto the surface
 
-        # right paddle
-        if paddle2_rect.right <= ball['rect'].right:
-            if ball['rect'].bottom > paddle2_rect.top and ball['rect'].top < paddle2_rect.bottom:
-                # block has moved past the left side
-                if ball['dir'] == DOWNRIGHT:
-                    ball['dir'] = DOWNLEFT
-                if ball['dir'] == UPRIGHT:
-                    ball['dir'] = UPLEFT
-
-        # draw the block onto the surface
-
-        pygame.draw.rect(windowSurface, ball['color'], ball['rect'])
+    pygame.draw.rect(windowSurface, ball['color'], ball['rect'])
 
     # paddle1
 
