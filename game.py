@@ -46,7 +46,7 @@ centreY = WINDOWHEIGHT / 2
 
 # set up the ball
 
-ball = {'rect': skull, 'dir': UPRIGHT}
+ball = {'rect': pygame.Rect(centreX, centreY, 20, 20), 'color': ORANGE, 'dir': UPRIGHT}
 paddle1 = {'rect': pygame.Rect(50, 250, 20, 100), 'color': PURPLE}
 paddle2 = {'rect': pygame.Rect(900, 250, 20, 100), 'color': RED}
 
@@ -62,7 +62,7 @@ p2_score = 0
 while True:
 
     def new_ball(direction):
-        return {'rect': skull, 'dir': direction}
+        return {'rect': pygame.Rect(centreX, centreY, 20, 20), 'color': ORANGE, 'dir': direction}
 
 
     # check for the QUIT event
@@ -158,7 +158,7 @@ while True:
 
     # draw the block onto the surface
 
-    windowSurface.blit(ball['rect'], (ball['rect'].left, ball['rect'].top))
+    pygame.draw.rect(windowSurface, ball['color'], ball['rect'])
 
     # paddle1
 
@@ -182,4 +182,4 @@ while True:
 
     # draw the window onto the screen
     pygame.display.update()
-    time.sleep(0.01)
+    time.sleep(0.02)
