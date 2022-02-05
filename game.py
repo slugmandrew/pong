@@ -1,10 +1,11 @@
-from typing import Dict, Union, Tuple
+import random
 
-import pygame, sys, time
-from pygame.locals import *
-
+import pygame
+import pygame.locals
 # set up pygame
-from pygame.rect import RectType
+import pygame.rect
+import sys
+import time
 
 pygame.init()
 
@@ -21,17 +22,16 @@ skull = pygame.image.load("skull.png").convert_alpha()
 skull = pygame.transform.rotozoom(skull, 0, 0.5)
 bone_left = pygame.image.load("bone_left.png").convert_alpha()
 bone_right = pygame.image.load("bone_right.png").convert_alpha()
-bone_left = pygame.transform.rotozoom(bone_left, 0, 0.45)
-bone_right = pygame.transform.rotozoom(bone_right, 0, 0.45)
-
+bone_left = pygame.transform.rotozoom(bone_left, 0, 0.4)
+bone_right = pygame.transform.rotozoom(bone_right, 0, 0.4)
 
 # set up direction/speed variables
-STATIONARY = 0
-DOWNLEFT = 1
-DOWNRIGHT = 2
-UPLEFT = 3
-UPRIGHT = 4
-MOVESPEED = 5
+STATIONARY = "stationary"
+DOWN_LEFT = "down-left"
+DOWN_RIGHT = "down-right"
+UP_LEFT = "up-left"
+UP_RIGHT = "up-right"
+SPEED = 5
 
 # set up the colors
 BLACK = (0, 0, 0)
@@ -44,9 +44,19 @@ ORANGE = (255, 165, 0)
 centreX = WINDOWWIDTH / 2
 centreY = WINDOWHEIGHT / 2
 
-# set up the ball
+# function that chooses a random
+def random_direction():
+  options = [DOWN_LEFT, DOWN_RIGHT, UP_LEFT, UP_RIGHT]
+  return random.choice(options)
 
-ball = {'rect': pygame.Rect(centreX, centreY, 20, 20), 'color': ORANGE, 'dir': UPRIGHT}
+# function that creates a new ball
+def new_ball(direction):
+  return {'rect': pygame.Rect(centreX, centreY, 20, 20), 'color': ORANGE, 'dir': direction}
+
+# set up the ball
+ball = new_ball(random_direction())
+
+# set up the paddles
 paddle1 = {'rect': pygame.Rect(50, 250, 20, 100), 'color': PURPLE}
 paddle2 = {'rect': pygame.Rect(900, 250, 20, 100), 'color': RED}
 
@@ -61,125 +71,121 @@ p2_score = 0
 # run the game loop
 while True:
 
-    def new_ball(direction):
-        return {'rect': pygame.Rect(centreX, centreY, 20, 20), 'color': ORANGE, 'dir': direction}
+  # check for the QUIT event
+  for event in pygame.event.get():
 
+    if event.type == pygame.locals.QUIT:
+      pygame.quit()
+      sys.exit()
 
-    # check for the QUIT event
-    for event in pygame.event.get():
+  # draw the black background onto the surface
+  windowSurface.fill(BLACK)
+  background.set_alpha(75)
+  windowSurface.blit(background, (0, 0))
 
-        if event.type == pygame.locals.QUIT:
-            pygame.quit()
-            sys.exit()
+  # move the block data structure
+  if ball['dir'] == DOWN_LEFT:
+    ball['rect'].left -= SPEED
+    ball['rect'].top += SPEED
 
-    # draw the black background onto the surface
-    windowSurface.fill(BLACK)
-    windowSurface.blit(background, (0, 0))
+  if ball['dir'] == DOWN_RIGHT:
+    ball['rect'].left += SPEED
+    ball['rect'].top += SPEED
 
+  if ball['dir'] == UP_LEFT:
+    ball['rect'].left -= SPEED
+    ball['rect'].top -= SPEED
 
-    # loop the block
-    paddle1_rect = paddle1['rect']
-    paddle2_rect = paddle2['rect']
+  if ball['dir'] == UP_RIGHT:
+    ball['rect'].left += SPEED
+    ball['rect'].top -= SPEED
 
-    # move the block data structure
-    if ball['dir'] == DOWNLEFT:
-        ball['rect'].left -= MOVESPEED
-        ball['rect'].top += MOVESPEED
+  # check if the block has moved out of the window
+  if ball['rect'].top < 0:
 
-    if ball['dir'] == DOWNRIGHT:
-        ball['rect'].left += MOVESPEED
-        ball['rect'].top += MOVESPEED
+    # block has moved past the top
+    if ball['dir'] == UP_LEFT:
+      ball['dir'] = DOWN_LEFT
+    if ball['dir'] == UP_RIGHT:
+      ball['dir'] = DOWN_RIGHT
 
-    if ball['dir'] == UPLEFT:
-        ball['rect'].left -= MOVESPEED
-        ball['rect'].top -= MOVESPEED
+  if ball['rect'].bottom > WINDOWHEIGHT:
 
-    if ball['dir'] == UPRIGHT:
-        ball['rect'].left += MOVESPEED
-        ball['rect'].top -= MOVESPEED
+    # block has moved past the bottom
+    if ball['dir'] == DOWN_LEFT:
+      ball['dir'] = UP_LEFT
+    if ball['dir'] == DOWN_RIGHT:
+      ball['dir'] = UP_RIGHT
 
-    # check if the block has moved out of the window
-    if ball['rect'].top < 0:
+  if ball['rect'].left < 0:
+    # block has moved past the left side
 
-        # block has moved past the top
-        if ball['dir'] == UPLEFT:
-            ball['dir'] = DOWNLEFT
-        if ball['dir'] == UPRIGHT:
-            ball['dir'] = DOWNRIGHT
+    # increment score by 1
+    p2_score += 1
 
-    if ball['rect'].bottom > WINDOWHEIGHT:
+    # wait for space bar to start
 
-        # block has moved past the bottom
-        if ball['dir'] == DOWNLEFT:
-            ball['dir'] = UPLEFT
-        if ball['dir'] == DOWNRIGHT:
-            ball['dir'] = UPRIGHT
+    ball = new_ball(UP_RIGHT)
 
-    if ball['rect'].left < 0:
-        # block has moved past the left side
+  if ball['rect'].right > WINDOWWIDTH:
+    # block has moved past the right side
 
-        # increment score by 1
-        p2_score += 1
+    # increment score by 1
+    p1_score += 1
 
-        # wait for space bar to start
+    ball = new_ball(UP_LEFT)
 
-        ball = new_ball(UPRIGHT)
+    # if ball['dir'] == DOWNRIGHT:
+    #     ball['dir'] = DOWNLEFT
+    # if ball['dir'] == UPRIGHT:
+    #     ball['dir'] = UPLEFT
 
-    if ball['rect'].right > WINDOWWIDTH:
-        # block has moved past the right side
+  # grab the rectangles
+  paddle1_rect = paddle1['rect']
+  paddle2_rect = paddle2['rect']
 
-        # increment score by 1
-        p1_score += 1
+  # left paddle
+  if paddle1_rect.left >= ball['rect'].left:
+    if ball['rect'].top > paddle1_rect.top and ball['rect'].bottom < paddle1_rect.bottom:
+      # block has moved past the left side
+      if ball['dir'] == DOWN_LEFT:
+        ball['dir'] = DOWN_RIGHT
+      if ball['dir'] == UP_LEFT:
+        ball['dir'] = UP_RIGHT
 
-        ball = new_ball(UPLEFT)
+  # right paddle
+  if paddle2_rect.right <= ball['rect'].right:
+    if ball['rect'].bottom > paddle2_rect.top and ball['rect'].top < paddle2_rect.bottom:
+      # block has moved past the left side
+      if ball['dir'] == DOWN_RIGHT:
+        ball['dir'] = DOWN_LEFT
+      if ball['dir'] == UP_RIGHT:
+        ball['dir'] = UP_LEFT
 
-        # if ball['dir'] == DOWNRIGHT:
-        #     ball['dir'] = DOWNLEFT
-        # if ball['dir'] == UPRIGHT:
-        #     ball['dir'] = UPLEFT
+  # draw the block onto the surface
 
-    # left paddle
-    if paddle1_rect.left >= ball['rect'].left:
-        if ball['rect'].top > paddle1_rect.top and ball['rect'].bottom < paddle1_rect.bottom:
-            # block has moved past the left side
-            if ball['dir'] == DOWNLEFT:
-                ball['dir'] = DOWNRIGHT
-            if ball['dir'] == UPLEFT:
-                ball['dir'] = UPRIGHT
+  pygame.draw.circle(windowSurface, ball['color'], ball['rect'].center, 10.0)
 
-    # right paddle
-    if paddle2_rect.right <= ball['rect'].right:
-        if ball['rect'].bottom > paddle2_rect.top and ball['rect'].top < paddle2_rect.bottom:
-            # block has moved past the left side
-            if ball['dir'] == DOWNRIGHT:
-                ball['dir'] = DOWNLEFT
-            if ball['dir'] == UPRIGHT:
-                ball['dir'] = UPLEFT
+  # paddle1
 
-    # draw the block onto the surface
+  keys_pressed = pygame.key.get_pressed()
 
-    pygame.draw.rect(windowSurface, ball['color'], ball['rect'])
+  if keys_pressed[pygame.K_q]:
+    paddle1_rect.top -= SPEED
+  if keys_pressed[pygame.K_a]:
+    paddle1_rect.top += SPEED
 
-    # paddle1
+  if keys_pressed[pygame.K_p]:
+    paddle2_rect.top -= SPEED
+  if keys_pressed[pygame.K_l]:
+    paddle2_rect.top += SPEED
 
-    keys_pressed = pygame.key.get_pressed()
+  windowSurface.blit(bone_left, (paddle1_rect.left, paddle1_rect.top))
+  windowSurface.blit(bone_right, (paddle2_rect.left, paddle2_rect.top))
 
-    if keys_pressed[pygame.K_q]:
-        paddle1_rect.top -= MOVESPEED
-    if keys_pressed[pygame.K_a]:
-        paddle1_rect.top += MOVESPEED
+  windowSurface.blit(myfont.render(str(p1_score), True, PURPLE), (20, 0))
+  windowSurface.blit(myfont.render(str(p2_score), True, RED), (940, 0))
 
-    if keys_pressed[pygame.K_p]:
-        paddle2_rect.top -= MOVESPEED
-    if keys_pressed[pygame.K_l]:
-        paddle2_rect.top += MOVESPEED
-
-    windowSurface.blit(bone_left, (paddle1_rect.left, paddle1_rect.top))
-    windowSurface.blit(bone_right, (paddle2_rect.left, paddle2_rect.top))
-
-    windowSurface.blit(myfont.render(str(p1_score), 1, PURPLE), (20, 0))
-    windowSurface.blit(myfont.render(str(p2_score), 1, RED), (940, 0))
-
-    # draw the window onto the screen
-    pygame.display.update()
-    time.sleep(0.02)
+  # draw the window onto the screen
+  pygame.display.update()
+  time.sleep(0.01)
