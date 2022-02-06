@@ -8,6 +8,7 @@ import pygame.locals
 # set up pygame
 import pygame.rect
 from pygame._sdl2.controller import Controller
+from pygame.constants import *
 
 pygame.init()
 
@@ -32,6 +33,23 @@ print("Axes: " + str(joystick.get_numaxes()))
 print("Hats: " + str(joystick.get_numhats()))
 print("Balls: " + str(joystick.get_numballs()))
 print("Buttons: " + str(joystick.get_numbuttons()))
+
+
+def get_controller_left():
+  return joystick.get_hat(0).index(0) == 1
+
+
+def get_controller_right():
+  return joystick.get_hat(0).index(0) == -1
+
+
+def get_controller_up():
+  return joystick.get_hat(0).index(1) == 1
+
+
+def get_controller_down():
+  return joystick.get_hat(0).index(1) == -1
+
 
 # load images
 background = pygame.image.load("skull_background.jpg").convert()
@@ -206,14 +224,14 @@ while True:
   # check for keyboard controls
   keys_pressed = pygame.key.get_pressed()
 
-  if keys_pressed[pygame.K_q]:
+  if keys_pressed[pygame.K_q] or controller.get_button(CONTROLLER_BUTTON_DPAD_UP):
     paddle1_rect.top -= SPEED
-  if keys_pressed[pygame.K_a]:
+  if keys_pressed[pygame.K_a] or controller.get_button(CONTROLLER_BUTTON_DPAD_DOWN):
     paddle1_rect.top += SPEED
 
-  if keys_pressed[pygame.K_p]:
+  if keys_pressed[pygame.K_p] or controller.get_button(CONTROLLER_BUTTON_Y):
     paddle2_rect.top -= SPEED
-  if keys_pressed[pygame.K_l]:
+  if keys_pressed[pygame.K_l] or controller.get_button(CONTROLLER_BUTTON_A):
     paddle2_rect.top += SPEED
 
   windowSurface.blit(bone_left, (paddle1_rect.left, paddle1_rect.top))
