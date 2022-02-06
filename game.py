@@ -1,19 +1,37 @@
 import random
+import random
+import sys
+import time
 
 import pygame
 import pygame.locals
 # set up pygame
 import pygame.rect
-import sys
-import time
+from pygame._sdl2.controller import Controller
 
 pygame.init()
+
+# see debug information blitted in real time over the game
+DEBUG_MODE = True
 
 # set up the window
 WINDOWWIDTH = 1000
 WINDOWHEIGHT = 600
 windowSurface = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT), 0, 32)
 pygame.display.set_caption('Animation')
+
+pygame.joystick.init()
+pygame._sdl2.controller.init()
+joysticks = [pygame.joystick.Joystick(x) for x in range(pygame.joystick.get_count())]
+print(joysticks)
+joystick = joysticks[0]
+# controller gives us a more 'natural' set of controls
+controller = Controller.from_joystick(joystick)
+
+print("Axes: " + str(joystick.get_numaxes()))
+print("Hats: " + str(joystick.get_numhats()))
+print("Balls: " + str(joystick.get_numballs()))
+print("Buttons: " + str(joystick.get_numbuttons()))
 
 # load images
 background = pygame.image.load("skull_background.jpg").convert()
@@ -37,6 +55,7 @@ SPEED = 5
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
+BLUE = (0, 0, 255)
 PURPLE = (155, 0, 255)
 YELLOW = (255, 255, 0)
 ORANGE = (255, 165, 0)
@@ -44,14 +63,17 @@ ORANGE = (255, 165, 0)
 centreX = WINDOWWIDTH / 2
 centreY = WINDOWHEIGHT / 2
 
+
 # function that chooses a random
 def random_direction():
   options = [DOWN_LEFT, DOWN_RIGHT, UP_LEFT, UP_RIGHT]
   return random.choice(options)
 
+
 # function that creates a new ball
 def new_ball(direction):
   return {'rect': pygame.Rect(centreX, centreY, 20, 20), 'color': ORANGE, 'dir': direction}
+
 
 # set up the ball
 ball = new_ball(random_direction())
@@ -61,7 +83,8 @@ paddle1 = {'rect': pygame.Rect(50, 250, 20, 100), 'color': PURPLE}
 paddle2 = {'rect': pygame.Rect(900, 250, 20, 100), 'color': RED}
 
 # initialize font; must be called after 'pygame.init()' to avoid 'Font not Initialized' error
-myfont = pygame.font.SysFont("Chiller", 96)
+myfont = pygame.font.SysFont("Arial", 72)
+myfont2 = pygame.font.SysFont("Courier", 30)
 
 # render text
 
@@ -83,6 +106,22 @@ while True:
   background.set_alpha(75)
   windowSurface.blit(background, (0, 0))
 
+  if DEBUG_MODE:
+    # print the state of all controller buttons in this loop
+    for button in range(joystick.get_numbuttons()):
+      windowSurface.blit(myfont2.render(f"B{button}", True, GREEN), (button * 60, 300))
+      windowSurface.blit(myfont.render(str(joystick.get_button(button)), True, GREEN), (button * 60, 330))
+
+    # now do the same for the axes!
+    for axis in range(joystick.get_numaxes()):
+      windowSurface.blit(myfont2.render(f"A{axis}", True, BLUE), (axis * 170, 400))
+      windowSurface.blit(myfont.render(str(round(joystick.get_axis(axis), 1)), True, BLUE), (axis * 170, 430))
+
+    # now do the same for the hats!
+    for hat in range(joystick.get_numhats()):
+      windowSurface.blit(myfont2.render(f"H{hat}", True, ORANGE), (hat * 170, 500))
+      windowSurface.blit(myfont.render(str(joystick.get_hat(hat)), True, ORANGE), (hat * 170, 530))
+
   # move the block data structure
   if ball['dir'] == DOWN_LEFT:
     ball['rect'].left -= SPEED
@@ -102,7 +141,6 @@ while True:
 
   # check if the block has moved out of the window
   if ball['rect'].top < 0:
-
     # block has moved past the top
     if ball['dir'] == UP_LEFT:
       ball['dir'] = DOWN_LEFT
@@ -110,7 +148,6 @@ while True:
       ball['dir'] = DOWN_RIGHT
 
   if ball['rect'].bottom > WINDOWHEIGHT:
-
     # block has moved past the bottom
     if ball['dir'] == DOWN_LEFT:
       ball['dir'] = UP_LEFT
@@ -166,8 +203,7 @@ while True:
 
   pygame.draw.circle(windowSurface, ball['color'], ball['rect'].center, 10.0)
 
-  # paddle1
-
+  # check for keyboard controls
   keys_pressed = pygame.key.get_pressed()
 
   if keys_pressed[pygame.K_q]:
